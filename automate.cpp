@@ -73,7 +73,7 @@ class Automate {
 		auto getInput() {
 			string inputValuesStr;
 			cout << "Input: ";
-			getchar();
+			/*getchar();*/
 			getline(cin, inputValuesStr);
 			splitByDelimeter(inputValuesStr, inputValues);
 		}
@@ -95,12 +95,17 @@ private:
 		//uint32_t x_n = transientOutputFunc(next, xVector, 0);
 		auto tmp = vector<vector<uint32_t>>();
 		tmp.push_back(initialState);
-		auto s_mult_matr_A = multiplyMatr(tmp, this->matrA);
+		vector<vector<uint32_t>> s_mult_matr_A;
+		multiplyMatr(tmp, this->matrA, s_mult_matr_A);
+		cout << "Mult MatrA success" << endl;
 		tmp.clear();
 		tmp.push_back(inputValues);
-		auto x_mult_matr_C = multiplyMatr(tmp, this->matrC);
-		vector<uint32_t> res = vector<uint32_t>();
-		addMatr(s_mult_matr_A[0], x_mult_matr_C[0], res);
+		vector<vector<uint32_t>> x_mult_matr_B;
+		multiplyMatr(tmp, this->matrB, x_mult_matr_B);
+		cout << "Mult MatrC success" << endl;
+
+		static vector<uint32_t> res = vector<uint32_t>();
+		addMatr(s_mult_matr_A[0], x_mult_matr_B[0], res);
 		//return xVector;
 		for (int i = 0; i < res.size(); i++) {
 			cout << res[i] << " ";
@@ -109,15 +114,19 @@ private:
 		return res;
 	}
 	void fFunc() {
-		auto &res_H = hFunc();
+		auto res_H = hFunc();
 		auto tmp = vector<vector<uint32_t>>();
 		tmp.push_back(initialState);
-		auto s_mult_matr_B = multiplyMatr(tmp, this->matrB);
+		vector<vector<uint32_t>> s_mult_matr_C;
+		multiplyMatr(tmp, this->matrC, s_mult_matr_C);
 		tmp.clear();
 		tmp.push_back(inputValues);
-		auto x_mult_matr_D = multiplyMatr(tmp, this->matrD);
+		vector<vector<uint32_t>> x_mult_matr_D;
+		multiplyMatr(tmp, this->matrD, x_mult_matr_D);
 		vector<uint32_t> res = vector<uint32_t>();
-		addMatr(s_mult_matr_B[0], x_mult_matr_D[0], res);
+		addMatr(s_mult_matr_C[0], x_mult_matr_D[0], res);
+
+		cout << "result" << endl;
 		for (int i = 0; i < res.size(); i++) {
 			cout << res[i] << " ";
 		}
@@ -131,21 +140,20 @@ public:
 		ifstream myfile(path);
 		if (myfile.is_open())
 		{
-			getInitialState();
-			getInput();
+			
 			string line;
 			getline(myfile, line);
 			this->q = stoi(line);
 			
 			getline(myfile, line);
-			this->n = stoi(line);
-			getline(myfile, line);
 			this->m = stoi(line);
+			getline(myfile, line);
+			this->n = stoi(line);
 			getline(myfile, line);
 			this->k = stoi(line);
 			cout << "Q: " << this->q << " " << this->m << " " << this->n << " " << this->k << endl;
 			this->initializeMatr(&myfile, n, n, matrA);
-			cout << "Size:" << matrA.size() << endl;
+			cout << "Size matrA:" << matrA.size() << endl;
 			for (int i = 0; i < matrA.size(); i++) {
 				for (int j = 0; j < matrA[i].size(); j++) cout << matrA[i][j] << " ";
 				cout << endl;
@@ -168,58 +176,67 @@ public:
 			}
 
 			myfile.close();
+			getInitialState();
+			//getInput();
 			
-			vector<vector<uint32_t>> &multRes = multiplyMatr(matrA, matrC);
-			cout << "Mult: " << endl;
-			cout << multRes.size() << endl;
-			for (int i = 0; i < multRes.size(); i++) {
-				for (int j = 0; j < multRes[i].size(); j++) cout << multRes[i][j] << " ";
-				cout << endl;
-			}
+			//vector<vector<uint32_t>> &multRes = multiplyMatr(matrA, matrC);
+			//cout << "Mult: " << endl;
+			//cout << multRes.size() << endl;
+			//for (int i = 0; i < multRes.size(); i++) {
+			//	for (int j = 0; j < multRes[i].size(); j++) cout << multRes[i][j] << " ";
+			//	cout << endl;
+			//}
 		}
-		
+		//hFunc();
+		//fFunc();
 		// sleep(100);
 	}
 	uint32_t multMod(uint32_t op1, uint32_t op2) {
-		cout << op1 * op2 << endl;
+		//cout << op1 * op2 << endl;
 		return (op1 * op2) % q;
 	}
 
 	uint32_t addMod(uint32_t op1, uint32_t op2) {
-		cout << op1 + op2 << endl;
+		//cout << op1 + op2 << endl;
 		return (op1 + op2) % q;
 	}
 
-	vector<vector<uint32_t>>& multiplyMatr(vector<vector<uint32_t>>& A, vector<vector<uint32_t>>& B) {
-		static vector<vector<uint32_t>> result = vector<vector<uint32_t>>(A.size(), vector<uint32_t>(B[0].size(), 0));
+	void multiplyMatr(vector<vector<uint32_t>>& matrix1, vector<vector<uint32_t>>& matrix2, vector<vector<uint32_t>>& result) {
+		result = vector<vector<uint32_t>>(matrix1.size(), vector<uint32_t>(matrix2[0].size(), 0));
 		/*for (i = 0; i < A.size(); i++)
 			result[i] = (float*)calloc(k, sizeof(float));*/
 		uint32_t temp = 0;
-		for (int i = 0; i < A.size(); i++) {
+		//for (int i = 0; i < result.size(); i++) result.push_back(vector<uint32_t>(matrix2[0].size(), 0));
+		for (int i = 0; i < matrix1.size(); i++) {
 			//result.push_back(vector<uint32_t>(A[i].size()));
-			temp = 0;
-			for (int j = 0; j < A[i].size(); j++) {
+			for (int j = 0; j < matrix2[0].size(); j++) {
 				/*result[i].push_back(0);*/
-				for (int l = 0; l < B[i].size(); l++) {
-					temp = addMod(multMod(A[i][j], B[j][l]), result[i][l]);
-					cout << "temp: " << temp << " " << A[i][j] << " " << B[j][l] << endl;
-					result[i][l] = temp;
+				for (int l = 0; l < matrix1[0].size(); l++) {
+					//temp = addMod(multMod(A[i][j], B[j][l]), result[i][l]);
+					temp = addMod(multMod(matrix1[i
+					][l], matrix2[l][j]), result[i][j]);
+					// 
+					//temp = addMod(multMod(A[i][j], B[j][l]), temp);
+					// 
+					//cout << "temp: " << temp << " " << A[i][j] << " " << B[j][l] << endl;
+					result[i][j] = temp;
 				}
 			}
 			//result[i].push_back(temp);
 		}
-		cout << "Size:" << result.size() << result[0][0] << " " << result[0][1] << " " << result[0][2] << endl;
-		cout << "Size:" << result[0].size() << result[1][0] << " " << result[1][1] << " " << result[1][2] << endl;
-		return result;
+		//cout << "Size:" << result.size() << result[0][0] << " " << result[0][1] << " " << result[0][2] << endl;
+		//cout << "Size:" << result[0].size() << result[1][0] << " " << result[1][1] << " " << result[1][2] << endl;
+		//return result;
 	}
 	void addMatr(vector<uint32_t>& A, vector<uint32_t>& B, vector<uint32_t>& res) {
 		for (int i = 0; i < A.size(); ++i) {
-			res.push_back(A[i] + B[i]);
+			res.push_back(addMod(A[i], B[i]));
 		}
 	}
 	void nextState() {
-		getInput();
+		//getInput();
 		this->fFunc();
+		
 	}
 };
 
@@ -301,7 +318,7 @@ private:
 			/*cout << "input_0 " << hFunc(genVectorFromNum(state), input_0) << endl;
 			cout << "input_1 " << hFunc(genVectorFromNum(state), input_1) << endl;*/
 			//cout << "POP " << (((state << 1) | hFunc(genVectorFromNum(state), input_0)) & (size / 2 - 1)) << " " << (((state << 1) | hFunc(genVectorFromNum(state), input_1)) & (size / 2 - 1)) << endl;
-			cout << "size tmp: " << genVectorFromNum(state).size() << endl;
+			//cout << "size tmp: " << genVectorFromNum(state).size() << endl;
 			auto tmp_vector = genVectorFromNum(state);
 			
 			accessMatrix[state][(((state << 1) | hFunc(tmp_vector, input_0)) & (size / 2 - 1))] = 1;
@@ -828,6 +845,7 @@ int main(int argc, char* argv[]) {
 		else if (automateType == "Linear") {
 			LinearAutomate obj = LinearAutomate(path);
 			while (1) {
+				obj.getInput();
 				obj.nextState();
 			}
 		}
